@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+//debug..........
+#define error(args...) {vector<string>_v=split(#args,',');err(_v.begin(),args);cout<<endl;}
+vector<string> split(const string &s, char c) {vector<string>v; stringstream ss(s); string x;while (getline(ss, x, c))v.emplace_back(x); return move(v);} void err(vector<string>::iterator it) {}
+template<typename T, typename... Args>void err(vector<string>::iterator it, T a, Args...args) {cout << it->substr((*it)[0] == ' ', it->length()) << " = " << a << " "; err(++it, args...);}
+#define int long long
+
+const int N = 1e5+5;
+const int k = 18;
+
+vector<pair<int,int>> g[N];
+int par[N][k];
+int dep[N];
+int dis[N];
+
+
+void dfs(int x,int p){
+    par[x][0] = p;
+    dep[x] = dep[p]+1;
+    for(int i=1;i<k;i++){
+        par[x][i] = par[par[x][i-1]][i-1];
+    }
+
+    for(auto i: g[x]){
+        if(i.first == p)continue;
+        dis[i.first] = dis[x]+i.second;
+        dfs(i.first,x);
+    }
+
+}
+
+int get_lca(int x, int y){
+    if(dep[x] > dep[y])swap(x,y);
+    int d = dep[y] - dep[x];
+    for(int i=0;i<k;i++){
+        if(d&(1<<i)){
+            y = par[y][i];
+        }
+    }
+    if(x == y){
+        return x;
+    }
+
+    for(int i=k-1;i>=0;i--){
+        if(par[x][i] != par[y][i]){
+            x = par[x][i];
+            y = par[y][i];
+        }
+    }
+    return par[x][0];
+}
+
+int get_kth(int x, int y , int kth){
+    int lca = get_lca(x,y);
+    if(dep[x] - dep[lca]+1 >= kth){
+        int d = kth-1;
+        for(int i=0;i<k;i++){
+            if(d&(1<<i)){
+                x = par[x][i];
+            }
+        }
+        return x;
+    }
+    kth -= (dep[x] - dep[lca]+1);
+    int dd = (dep[y] - dep[lca]) - kth;
+    for(int i=0;i<k;i++){
+        if(dd&(1<<i)){
+            y = par[y][i];
+        }
+    }
+    return y;
+}
+
+signed solve(){
+
+    int n;
+    cin>>n;
+
+    for(int i=0;i<=n;i++){
+        g[i].clear();
+        dep[i] = 0;
+        dis[i] = 0;
+        for(int j=0;j<k;j++){
+            par[i][j] = 0;
+        }
+    }
+
+    int x,y,w;
+    for(int i=0;i<n-1;i++){
+        cin>>x>>y>>w;
+        g[x].push_back({y , w});
+        g[y].push_back({x , w});
+    }   
+
+    dfs(1,1);
+
+
+    while(1){
+        string s;
+        cin>>s;
+        int x, y;
+        if(s == "DONE")return 0;
+        else if(s == "DIST"){
+            cin>>x>>y;
+            int lca = get_lca(x,y);
+            cout<<dis[x]+dis[y]-2*dis[lca]<<endl;
+        }else{
+            int k;
+            cin>>x>>y>>k;
+            cout<<get_kth(x, y , k)<<endl;
+        }
+    }
+
+    return 0;
+}
+signed main(){
+    ios::sync_with_stdio(false);cin.tie(0);int test = 1;
+    cin>>test;
+    while (test--)solve();return 0;
+}
