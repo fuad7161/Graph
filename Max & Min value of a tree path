@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+//debug..........
+#define error(args...) {vector<string>_v=split(#args,',');err(_v.begin(),args);cout<<endl;}
+vector<string> split(const string &s, char c) {vector<string>v; stringstream ss(s); string x;while (getline(ss, x, c))v.emplace_back(x); return move(v);} void err(vector<string>::iterator it) {}
+template<typename T, typename... Args>void err(vector<string>::iterator it, T a, Args...args) {cout << it->substr((*it)[0] == ' ', it->length()) << " = " << a << " "; err(++it, args...);}
+#define int long long
+
+const int N = 5e5 + 5;
+const int k = 18;
+
+vector<pair<int,int>>g[N];
+int dep[N] , mx[N][k] , mn[N][k] , par[N][k];
+
+void dfs(int u, int p = 0){
+    dep[u] = dep[p]+1;
+    par[u][0] = p;
+    for(int i=1;i<k;i++){
+        par[u][i] = par[par[u][i-1]][i-1];
+        mx[u][i] = max(mx[u][i-1] , mx[par[u][i-1]][i-1]);
+        mn[u][i] = min(mn[u][i-1] , mn[par[u][i-1]][i-1]);
+    }
+
+    for(auto i: g[u]){
+        int v = i.first;
+        int w = i.second;
+        if(v == p){
+            continue;
+        }
+        mx[v][0] = w;
+        mn[v][0] = w;
+        dfs(v,u);
+    }
+}
+
+pair<int,int> lca(int u, int v){
+    if(dep[u] < dep[v])swap(u,v);
+    int d = dep[u] - dep[v];
+    int mxx = INT_MIN ; 
+    int mnx = INT_MAX ;
+    for(int i=0;i<k;i++){
+        if(d&(1<<i)){
+            mxx = max(mxx , mx[u][i]);
+            mnx = min(mnx , mn[u][i]);
+            u = par[u][i];
+        }
+    }
+
+    if(u == v) return {mxx , mnx};
+
+    for(int i=k-1;i>=0;i--){
+        if(par[u][i] != par[v][i]){
+            mxx = max(mxx , mx[u][i]);
+            mnx = min(mnx , mn[u][i]);
+            mxx = max(mxx , mx[v][i]);
+            mnx = min(mnx , mn[v][i]);
+            u = par[u][i];
+            v = par[v][i];
+        }
+    }
+    mxx = max(mxx , mx[u][0]);
+    mnx = min(mnx , mn[u][0]);
+    mxx = max(mxx , mx[v][0]);
+    mnx = min(mnx , mn[v][0]);
+
+    return {mxx , mnx};
+
+}
+
+signed solve(){
+
+       
+    int n;
+    cin>>n;
+
+    for(int i=1;i<n;i++){
+        int u,v,w;
+        cin>>u>>v>>w;
+        g[u].push_back({v,w});
+        g[v].push_back({u,w});
+    }
+
+    dfs(1,1);
+
+
+    int q;
+    cin>>q;
+
+    while(q--){
+        int u,v;
+        cin>>u>>v;
+        pair<int,int>no =  lca(u,v);
+        cout<<no.second<<" "<<no.first<<endl;
+
+    }
+
+    return 0;
+}
+signed main(){
+    ios::sync_with_stdio(false);cin.tie(0);int test = 1;
+    // cin>>test;
+    while (test--)solve();return 0;
+}
